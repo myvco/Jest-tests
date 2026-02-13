@@ -1,9 +1,11 @@
+import { describe, it, expect } from 'vitest';
 import {
     validateAge,
     validatePostCode,
     validateIdentity,
-    validateEmail
-} from "./validator.js";
+    validateEmail,
+    validateTown,
+} from "../utils/validator.js";
 
 describe("Validation form", () => {
 
@@ -12,6 +14,11 @@ describe("Validation form", () => {
         expect(() =>
             validateAge(new Date("2030-01-01"))
         ).toThrow(expect.objectContaining({ code: "INVALID_DATE" }));
+    });
+
+    it("should reject invalid birth type", () => {
+        expect(() => validateAge("not a date"))
+            .toThrow(expect.objectContaining({ code: "INVALID_DATE" }));
     });
 
     it("should accept 18 years old", () => {
@@ -74,4 +81,17 @@ describe("Validation form", () => {
         });
     });
 
+    //TOWN
+        it("should accept valid town name", () => {
+        expect(() => validateTown("Paris")).not.toThrow();
+        expect(() => validateTown("Saint-Étienne")).not.toThrow();
+    });
+
+    it("should reject invalid town name", () => {
+        ["Paris123", "Saint/Étienne", "<script>alert(1)</script>"].forEach(town => {
+            expect(() =>
+                validateTown(town)
+            ).toThrow(expect.objectContaining({code: "INVALID_TOWN"}));
+        })
+    });
 });

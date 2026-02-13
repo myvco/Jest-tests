@@ -1,4 +1,5 @@
-import { calculateAge } from "./module.js";
+import { describe, it, expect } from 'vitest';
+import { calculateAge } from "../utils/module.js";
 
 /**
  * @function calculateAge
@@ -6,8 +7,11 @@ import { calculateAge } from "./module.js";
 describe('calculateAge Unit Test Suites', () => {
 
     it('should return a correct age', () => {
-        const loise = { birth: new Date('11/07/1991') };
-        expect(calculateAge(loise)).toBe(34);
+        const loise = { birth: new Date('1991-11-07') };
+
+        const fakeDate = new Date('2026-12-01');
+
+        expect(calculateAge(loise, fakeDate)).toBe(35);
     });
 
     it('should throw a "missing param p" error', () => {
