@@ -1,20 +1,34 @@
 {
-  "name": "projet-test",
-  "version": "1.0.0",
+  "name": "project-test",
+  "version": "0.1.6",
+  "private": true,
   "type": "module",
-  "main": "index.js",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "docs": "jsdoc -c jsdoc.json"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest --coverage",
+    "jsdoc": "jsdoc -c ./jsdoc.config.json -r -d ./public/docs"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "dependencies": {
+    "axios": "^1.6.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.3",
+    "react-toastify": "^11.0.5"
+  },
   "devDependencies": {
-    "@babel/preset-env": "^7.29.0",
-    "babel-jest": "^30.2.0",
-    "jest": "^30.2.0",
-    "jsdoc": "^4.0.5"
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
+    "autoprefixer": "^10.4.24",
+    "jsdoc": "^4.0.5",
+    "jsdom": "^24.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   }
 }

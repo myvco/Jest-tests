@@ -1,0 +1,11 @@
+{
+  "source": {
+    "include": ["src"],
+    "exclude": [
+      "node_modules/", "server/"
+    ]
+  },
+  "plugins": [
+    "plugins/markdown"
+  ]
+}
