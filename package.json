@@ -1,5 +1,6 @@
 {
   "name": "project-test",
+  "homepage": "https://github.com/myvco/Jest-tests",
   "version": "0.1.6",
   "private": true,
   "type": "module",
