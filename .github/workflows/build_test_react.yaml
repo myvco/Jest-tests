@@ -1,14 +1,11 @@
-name: Build and Test React Application (start version)
+name: Build and Test React Application
 
-# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build_test:
     runs-on: ubuntu-latest
@@ -17,30 +14,46 @@ jobs:
       matrix:
         node-version: [21.x]
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: npm ci and test
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: true
+
+      - name: Generate JSDoc
+        run: npm run jsdoc
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Copy docs into dist
         run: |
-          npm ci
-          npm run build --if-present
-          npm test
-      - name: Upload coverage reports to codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
+          mkdir -p dist/docs
+          cp -r public/docs/* dist/docs/
+
       - name: Setup Pages
-        id: pages
         uses: actions/configure-pages@v3
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
   deploy:
     needs: build_test
     permissions:
@@ -49,7 +62,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{steps.deployment.outputs.page_url}}
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Deploy to Github Pages
         id: deployment
