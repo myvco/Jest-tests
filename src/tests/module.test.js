@@ -36,7 +36,7 @@ describe('calculateAge Unit Test Suites', () => {
     it('should throw "invalid date" for past or future dates', () => {
         const invalidBirthDates = [
             new Date(1969, 11, 31),
-            new Date(Date.now() + 1)
+            new Date("2100-01-01") // futur évident
         ];
 
         invalidBirthDates.forEach(date => {
@@ -44,5 +44,4 @@ describe('calculateAge Unit Test Suites', () => {
                 .toThrow("invalid date");
         });
     });
-
 });
