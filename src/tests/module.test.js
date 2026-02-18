@@ -5,9 +5,6 @@ import { calculateAge } from "../utils/module.js";
  * @function calculateAge
  */
 describe('calculateAge Unit Test Suites', () => {
-    beforeEach(() => {
-        localStorage.clear();
-    });
 
     it('should return a correct age', () => {
         const loise = { birth: new Date('1991-11-07') };
@@ -47,4 +44,14 @@ describe('calculateAge Unit Test Suites', () => {
                 .toThrow("invalid date");
         });
     });
+
 });
+
+
+//"1997/11/02"
+/**c'est plutot si la date est malformé
+ par exemple le 13ieme mois
+ ou le 30 fevrier
+ ou avant 1970
+ ou dans le futur 🙂
+ donc la je t'ai donné 4 tests possibles haha**/
