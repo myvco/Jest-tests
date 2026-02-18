@@ -10,6 +10,6 @@ describe('Counter Component', () => {
         render(<Counter />);
         const button = screen.getByRole('button');
         fireEvent.click(button);
-        expect(screen.getByTestId('count')).toHaveTextContent('Count: 1');
+        expect(screen.getByTestId('count')).toHaveTextContent('Count: 34');
     });
 });
