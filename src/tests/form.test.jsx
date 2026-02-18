@@ -5,6 +5,9 @@ import userEvent from "@testing-library/user-event";
 import Form from "../component/Form.jsx"
 
 describe("Form validation", () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
 
     it ("button is disabled when form is incomplete and invalid or enabled when completed and valid", async () => {
         const user = userEvent.setup();
@@ -115,10 +118,6 @@ describe("Form validation", () => {
     });
 
     it ("should save in local storage on successful submission", async () => {
-        beforeEach(() => {
-            localStorage.clear();
-        });
-
         const user = userEvent.setup();
 
         render(<Form />);
