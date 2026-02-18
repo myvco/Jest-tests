@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest --coverage",
-    "jsdoc": "jsdoc -c ./jsdoc.config.json -r -d ./public/docs"
+    "jsdoc": "jsdoc -r src -d docs"
   },
   "dependencies": {
     "axios": "^1.6.7",
