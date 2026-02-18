@@ -46,12 +46,3 @@ describe('calculateAge Unit Test Suites', () => {
     });
 
 });
-
-
-//"1997/11/02"
-/**c'est plutot si la date est malformé
- par exemple le 13ieme mois
- ou le 30 fevrier
- ou avant 1970
- ou dans le futur 🙂
- donc la je t'ai donné 4 tests possibles haha**/
