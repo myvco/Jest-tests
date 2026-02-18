@@ -44,7 +44,7 @@ jobs:
       - name: Copy docs into dist
         run: |
           mkdir -p dist/docs
-          cp -r public/docs/* dist/docs/
+          cp -r docs/* dist/docs/
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
