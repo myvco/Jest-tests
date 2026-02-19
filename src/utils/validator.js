@@ -29,25 +29,47 @@
  * const futureBirth = new Date("2030-01-01");
  * validateAge(futureBirth); // Throws error with code "INVALID_DATE"
  */
-function validateAge (birth) {
-    if (!(birth instanceof Date) || isNaN(birth.getTime())) {
-        throw { code: "INVALID_DATE", message: "Birth date is invalid" };
-    }
-    const now = new Date();
+function validateAge(birth) {
+  if (!(birth instanceof Date) || isNaN(birth.getTime())) {
+    throw { code: "INVALID_DATE", message: "Birth date is invalid" };
+  }
 
-    if(birth > now) {
-        throw { code: "INVALID_DATE", message: "Birth date cannot be in the future" };
-    }
-    let age = now.getFullYear() - birth.getFullYear();
+  const now = new Date();
 
-    const hasHadBirthday = now.getMonth() > birth.getMonth() ||
-        (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate());
+  if (birth.getFullYear() < 1900) {
+    throw { code: "INVALID_DATE", message: "Birth year is unrealistic" };
+  }
 
-    if (!hasHadBirthday) age--;
+  if (birth > now) {
+    throw { code: "INVALID_DATE", message: "Birth date cannot be in the future" };
+  }
 
-    if (age < 18) {
-        throw { code: "INVALID_AGE", message: "Must be at least 18 years old" };
-    }
+  const checkDate = new Date(
+    birth.getFullYear(),
+    birth.getMonth(),
+    birth.getDate()
+  );
+
+  if (
+    checkDate.getFullYear() !== birth.getFullYear() ||
+    checkDate.getMonth() !== birth.getMonth() ||
+    checkDate.getDate() !== birth.getDate()
+  ) {
+    throw { code: "INVALID_DATE", message: "Birth date does not exist" };
+  }
+
+  let age = now.getFullYear() - birth.getFullYear();
+
+  const hasHadBirthday =
+    now.getMonth() > birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() &&
+      now.getDate() >= birth.getDate());
+
+  if (!hasHadBirthday) age--;
+
+  if (age < 18) {
+    throw { code: "INVALID_AGE", message: "Must be at least 18 years old" };
+  }
 }
 
 /**

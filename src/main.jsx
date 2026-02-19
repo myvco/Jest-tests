@@ -1,14 +1,13 @@
 import React from "react";
+import { HashRouter } from "react-router-dom";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import Counter from "./component/Counter.jsx";
-import Form from "./component/Form.jsx";
+import App from "./App.jsx";
 
-ReactDOM.createRoot(document.getElementById("app")).render(
-    <React.StrictMode>
-        <div className="flex flex-col gap-4 justify-center items-center">
-            <Form />
-            <Counter />
-        </div>
-    </React.StrictMode>
+ReactDOM.createRoot(document.getElementById("root")).render(
+      <React.StrictMode>
+        <HashRouter>
+          <App />
+        </HashRouter>
+      </React.StrictMode>
 );

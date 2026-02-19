@@ -79,8 +79,9 @@ const initialState = {
  */
 function Form() {
     const [form, setForm] = useState(initialState);
-    const [errors, setErrors] = useState({});
-    const [isValid, setIsValid] = useState(false);
+      const [errors, setErrors] = useState({});
+      const [touched, setTouched] = useState({});
+      const [isValid, setIsValid] = useState(false);
 
     /**
      * Validates a single form field using appropriate validator function.
@@ -99,23 +100,23 @@ function Form() {
      */
     const validateField = (name, value) => {
         try {
-            if (name === 'email') {
-                validateEmail(value);
-            } else if (name === 'lastname' || name === 'firstname') {
-                validateIdentity(value);
-            } else if (name === 'birth') {
-                if (!value) throw { message: 'Birth is required' };
-                const d = new Date(value);
-                validateAge(d);
-            } else if (name === 'postCode') {
-                validatePostCode(value);
-            } else if (name === 'town') {
-               validateTown(value);
-            }
+          if (name === "email") {
+            validateEmail(value);
+          } else if (name === "lastname" || name === "firstname") {
+            validateIdentity(value);
+          } else if (name === "birth") {
+            if (!value) throw { message: "This field is required" };
+            validateAge(new Date(value));
+          } else if (name === "postCode") {
+            validatePostCode(value);
+          } else if (name === "town") {
+            validateTown(value);
+          }
+          return undefined;
         } catch (err) {
-            return (err && (err.message || err.code)) || String(err);
+          return err.message || err.code;
         }
-    };
+      };
 
     /**
      * Validates the entire form and updates error and validity states.
@@ -135,22 +136,27 @@ function Form() {
      */
     const validateForm = () => {
         const newErrors = {};
+
         Object.entries(form).forEach(([name, value]) => {
-            if (value === '' || value === null || value === undefined || String(value).trim() === '') {
-                newErrors[name] = 'This field is required';
-            } else {
-                const fieldError = validateField(name, value);
-                if (fieldError) newErrors[name] = fieldError;
-            }
+          if (!value || String(value).trim() === "") {
+            newErrors[name] = "This field is required";
+          } else {
+            const fieldError = validateField(name, value);
+            if (fieldError) newErrors[name] = fieldError;
+          }
         });
 
         setErrors(newErrors);
 
-        const allFilled = Object.values(form).every(v => v !== '' && v !== null && v !== undefined && String(v).trim() !== '');
         const noErrors = Object.keys(newErrors).length === 0;
-        setIsValid(allFilled && noErrors);
-        return { newErrors, allFilled, noErrors };
-    };
+        const allFilled = Object.values(form).every(
+          (v) => v && String(v).trim() !== ""
+        );
+
+        setIsValid(noErrors && allFilled);
+
+        return { noErrors, allFilled };
+      };
 
     /**
      * Effect hook that validates the form whenever form state changes.
@@ -175,10 +181,15 @@ function Form() {
      * Updates the form state for the changed field while preserving other fields.
      * The validateForm effect hook will automatically validate the updated form.
      */
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
+   const handleChange = (e) => {
+       const { name, value } = e.target;
+       setForm((prev) => ({ ...prev, [name]: value }));
+
+       if (touched[name]) {
+         const error = validateField(name, value);
+         setErrors((prev) => ({ ...prev, [name]: error }));
+       }
+     };
 
     /**
      * Handles form submission.
@@ -198,24 +209,41 @@ function Form() {
      * 6. After 300ms: clear form, show success toast
      *
      */
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const { allFilled, noErrors } = validateForm();
-        if (!allFilled || !noErrors) return;
+   const handleSubmit = (e) => {
+       e.preventDefault();
 
-        localStorage.setItem("user", JSON.stringify(form));
-        const id = toast.loading('Submitting form...');
-        setTimeout(() => {
-            setForm(initialState);
-            toast.update(id, {
-                render: 'Form successfully submitted!',
-                type: 'success',
-                isLoading: false,
-                autoClose: 3000,
-            });
-            validateForm();
-        }, 300);
-    };
+       const { noErrors, allFilled } = validateForm();
+
+       if (!noErrors || !allFilled) {
+         const allTouched = {};
+         Object.keys(form).forEach((key) => {
+           allTouched[key] = true;
+         });
+         setTouched(allTouched);
+         return;
+       }
+
+       const existingUsers =
+         JSON.parse(localStorage.getItem("users")) || [];
+       existingUsers.push(form);
+       localStorage.setItem("users", JSON.stringify(existingUsers));
+
+       const id = toast.loading("Submitting form...");
+
+       setTimeout(() => {
+         setForm(initialState);
+         setTouched({});
+         setErrors({});
+         setIsValid(false);
+
+         toast.update(id, {
+           render: "Form successfully submitted!",
+           type: "success",
+           isLoading: false,
+           autoClose: 3000,
+         });
+       }, 300);
+     };
 
     /**
      * Render the registration form component
@@ -228,42 +256,64 @@ function Form() {
      * - Toast notification container
      *
      */
-    return (
-        <div className="max-w-[400px]  w-full m-auto flex flex-col gap-4 justify-center items-center">
-            <h1>Registration Form</h1>
-            <section className="border border-gray-300 rounded p-4 w-full rounded justify-center items-center flex">
-                <form onSubmit={handleSubmit} noValidate>
-                    {['lastname', 'firstname', 'email', 'birth', 'postCode', 'town'].map((field) => (
-                        <div key={field} className="mb-[15px]">
-                            <input
-                                type={field === 'birth' ? 'date' : 'text'}
-                                name={field}
-                                placeholder={field}
-                                value={form[field]}
-                                onChange={handleChange}
-                                onBlur={() => {
-                                    const err = validateField(field, form[field]);
-                                    setErrors(prev => ({ ...prev, [field]: err }));
-                                    validateForm();
-                                }}
-                                className={`border border-gray-300 rounded ${errors[field] ? 'text-red-500' : ''}`}
-                                data-testid={field}
-                            />
-                            {errors[field] && (
-                                <p className="error">{errors[field]}</p>
-                            )}
-                        </div>
-                    ))}
-                    <div className="flex justify-center">
-                        <button type="submit" disabled={!isValid} data-testid="submit" className={`${!isValid ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold py-2 px-4 rounded`}>
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            </section>
+     return (
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <div className="w-full max-w-3xl bg-[#f8f5f1] rounded-3xl shadow-xl p-10">
+
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">
+              Registration Form
+            </h1>
+
+            <form onSubmit={handleSubmit} noValidate className="space-y-6">
+
+              {Object.keys(initialState).map((field) => (
+                <div key={field}>
+                  <input
+                    type={field === "birth" ? "date" : "text"}
+                    name={field}
+                    placeholder={field}
+                    value={form[field]}
+                    onChange={handleChange}
+                    onBlur={() => {
+                      setTouched((prev) => ({ ...prev, [field]: true }));
+                      const error = validateField(field, form[field]);
+                      setErrors((prev) => ({ ...prev, [field]: error }));
+                    }}
+                    className={`w-full px-4 py-3 rounded-xl border transition
+                    ${
+                      touched[field] && errors[field]
+                        ? "border-red-400 bg-red-50 focus:ring-red-200"
+                        : "border-gray-300 focus:ring-indigo-200"
+                    }
+                    focus:outline-none focus:ring-2`}
+                  />
+
+                  {touched[field] && errors[field] && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors[field]}
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              <button
+                type="submit"
+                disabled={!isValid}
+                className={`w-full py-3 rounded-xl font-semibold transition
+                  ${
+                    isValid
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+              >
+                Submit
+              </button>
+            </form>
+
             <ToastContainer />
+          </div>
         </div>
-    );
-}
+      );
+    }
 
 export default Form;
