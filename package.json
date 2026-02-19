@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest --coverage",
-    "jsdoc": "jsdoc -r src -d docs"
+    "jsdoc": "jsdoc -r src -d docs",
+    "cypress": "cypress open"
   },
   "dependencies": {
     "axios": "^1.6.7",
@@ -25,6 +26,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.24",
+    "cypress": "^15.10.0",
     "jsdoc": "^4.0.5",
     "jsdom": "^24.0.0",
     "postcss": "^8.5.6",
