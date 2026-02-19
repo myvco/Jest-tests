@@ -48,10 +48,6 @@ import EnvelopeLogo from "../assets/EnvelopeLogo";
  * ]
  */
 function Home() {
-  /**
-   * Registered users state
-   * @type {[User[], Function]}
-   */
   const [users, setUsers] = useState([]);
 
   /**
