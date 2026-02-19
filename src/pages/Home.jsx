@@ -30,22 +30,19 @@ function Home() {
               Subscriber(s):
             </h2>
 
-            {users.length > 0 ? (
-              <ul className="space-y-2">
-                {users.map((user, index) => (
-                  <li
-                    key={index}
-                    className="text-lg font-semibold text-gray-900"
-                  >
-                    {user.firstname} {user.lastname}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600">
-                No registered user yet.
-              </p>
-            )}
+           {users.length === 0 ? (
+             <p data-testid="no-users" className="text-gray-500">
+               No registered user yet.
+             </p>
+           ) : (
+             <ul data-testid="users-list" className="space-y-2">
+               {users.map((user, index) => (
+                 <li key={index}>
+                   {user.firstname} {user.lastname}
+                 </li>
+               ))}
+             </ul>
+           )}
           </div>
 
           {/* Subscribers count */}
@@ -54,16 +51,14 @@ function Home() {
               Subscribers count
             </h3>
 
-            {users.length > 0 ? (
-              <p className="text-4xl font-bold text-indigo-600">
-                {users.length}
-              </p>
-            ) : (
-              <p className="text-gray-500">
-                0
-              </p>
-            )}
+            <p
+              data-testid="users-count"
+              className="text-4xl font-bold text-indigo-600"
+            >
+              {users.length}
+            </p>
           </div>
+
         </div>
       </div>
     </div>

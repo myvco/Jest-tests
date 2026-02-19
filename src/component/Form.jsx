@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
+import { useNavigate } from "react-router-dom";
 
 import {
     validateAge,
@@ -82,6 +83,7 @@ function Form() {
       const [errors, setErrors] = useState({});
       const [touched, setTouched] = useState({});
       const [isValid, setIsValid] = useState(false);
+      const navigate = useNavigate();
 
     /**
      * Validates a single form field using appropriate validator function.
@@ -223,27 +225,38 @@ function Form() {
          return;
        }
 
-       const existingUsers =
-         JSON.parse(localStorage.getItem("users")) || [];
-       existingUsers.push(form);
-       localStorage.setItem("users", JSON.stringify(existingUsers));
+      const existingUsers =
+        JSON.parse(localStorage.getItem("users")) || [];
 
-       const id = toast.loading("Submitting form...");
+        const emailAlreadyExists = existingUsers.some(
+              user => user.email === form.email
+            );
 
-       setTimeout(() => {
-         setForm(initialState);
-         setTouched({});
-         setErrors({});
-         setIsValid(false);
+        if (emailAlreadyExists) {
+          toast.error("Email already exists")
+          return
+        };
 
-         toast.update(id, {
-           render: "Form successfully submitted!",
-           type: "success",
-           isLoading: false,
-           autoClose: 3000,
-         });
-       }, 300);
-     };
+         existingUsers.push(form);
+         localStorage.setItem("users", JSON.stringify(existingUsers));
+
+         const id = toast.loading("Submitting form...");
+
+         setTimeout(() => {
+           toast.update(id, {
+             render: "Form successfully submitted!",
+             type: "success",
+             isLoading: false,
+             autoClose: 1500,
+             onClose: () => navigate("/"),
+           });
+
+           setForm(initialState);
+           setTouched({});
+           setErrors({});
+           setIsValid(false);
+         }, 300);
+   };
 
     /**
      * Render the registration form component
