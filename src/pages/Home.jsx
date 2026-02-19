@@ -1,9 +1,67 @@
+/**
+ * @module Home
+ * @description Home page component displaying registered users stored in localStorage.
+ */
+
 import { useEffect, useState } from "react";
 import EnvelopeLogo from "../assets/EnvelopeLogo";
 
-function Home() {
-  const [users, setUsers] = useState([]); // ← CORRECTION ICI
+/**
+ * @typedef {Object} User
+ * @property {string} lastname - User's last name
+ * @property {string} firstname - User's first name
+ * @property {string} email - User's email address
+ * @property {string} birth - User's birth date (ISO format)
+ * @property {string} postCode - User's postal code
+ * @property {string} town - User's city/town
+ */
 
+/**
+ * Home Component
+ *
+ * Displays:
+ * - A welcome header with a logo
+ * - The list of registered users stored in localStorage
+ * - The total number of registered users
+ *
+ * Behavior:
+ * - On mount, retrieves users from localStorage (key: "users")
+ * - If no users are found, displays a fallback message
+ * - Dynamically updates the UI based on users array length
+ *
+ * @component
+ * @returns {React.ReactElement} Rendered Home page
+ *
+ * @state {User[]} users - Array of registered users loaded from localStorage
+ *
+ * @example
+ * // localStorage structure
+ * [
+ *   {
+ *     "lastname": "Jean",
+ *     "firstname": "Pierre",
+ *     "email": "jean@test.com",
+ *     "birth": "1995-05-15",
+ *     "postCode": "75001",
+ *     "town": "Paris"
+ *   }
+ * ]
+ */
+function Home() {
+  /**
+   * Registered users state
+   * @type {[User[], Function]}
+   */
+  const [users, setUsers] = useState([]);
+
+  /**
+   * Effect hook:
+   * Loads users from localStorage when component mounts.
+   *
+   * If no users exist, initializes with an empty array.
+   *
+   * @effect
+   */
   useEffect(() => {
     const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
     setUsers(storedUsers);
@@ -30,19 +88,22 @@ function Home() {
               Subscriber(s):
             </h2>
 
-           {users.length === 0 ? (
-             <p data-testid="no-users" className="text-gray-500">
-               No registered user yet.
-             </p>
-           ) : (
-             <ul data-testid="users-list" className="space-y-2">
-               {users.map((user, index) => (
-                 <li key={index}>
-                   {user.firstname} {user.lastname}
-                 </li>
-               ))}
-             </ul>
-           )}
+            {users.length === 0 ? (
+              <p data-testid="no-users" className="text-gray-500">
+                No registered user yet.
+              </p>
+            ) : (
+              <ul data-testid="users-list" className="space-y-2">
+                {users.map((user, index) => (
+                  <li
+                    key={index}
+                    className="text-lg font-semibold text-gray-900"
+                  >
+                    {user.firstname} {user.lastname}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Subscribers count */}

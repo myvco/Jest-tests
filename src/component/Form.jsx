@@ -225,37 +225,40 @@ function Form() {
          return;
        }
 
-      const existingUsers =
-        JSON.parse(localStorage.getItem("users")) || [];
+     const existingUsers =
+       JSON.parse(localStorage.getItem("users")) || [];
 
-        const emailAlreadyExists = existingUsers.some(
-              user => user.email === form.email
-            );
+     const emailAlreadyExists = existingUsers.some(
+       user => user.email.toLowerCase() === form.email.toLowerCase()
+     );
 
-        if (emailAlreadyExists) {
-          toast.error("Email already exists")
-          return
-        };
+     if (emailAlreadyExists) {
+       setErrors(prev => ({
+         ...prev,
+         email: "Email already exists"
+       }));
+       return;
+     }
 
-         existingUsers.push(form);
-         localStorage.setItem("users", JSON.stringify(existingUsers));
+     existingUsers.push(form);
+     localStorage.setItem("users", JSON.stringify(existingUsers));
 
-         const id = toast.loading("Submitting form...");
+     const id = toast.loading("Submitting form...");
 
-         setTimeout(() => {
-           toast.update(id, {
-             render: "Form successfully submitted!",
-             type: "success",
-             isLoading: false,
-             autoClose: 1500,
-             onClose: () => navigate("/"),
-           });
+     setTimeout(() => {
+       toast.update(id, {
+         render: "Form successfully submitted!",
+         type: "success",
+         isLoading: false,
+         autoClose: 1500,
+         onClose: () => navigate("/"),
+       });
 
-           setForm(initialState);
-           setTouched({});
-           setErrors({});
-           setIsValid(false);
-         }, 300);
+       setForm(initialState);
+       setTouched({});
+       setErrors({});
+       setIsValid(false);
+     }, 300);
    };
 
     /**
