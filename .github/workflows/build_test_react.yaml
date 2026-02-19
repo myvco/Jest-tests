@@ -32,7 +32,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           build: npm run build
-          dev: npm start
+          start: npm run dev
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
