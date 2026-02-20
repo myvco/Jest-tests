@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
 
+import { createUser, getUsers } from "../services/userService";
 import {
     validateAge,
     validatePostCode,
@@ -211,55 +212,87 @@ function Form() {
      * 6. After 300ms: clear form, show success toast
      *
      */
-   const handleSubmit = (e) => {
-       e.preventDefault();
+    const handleSubmit = async (e) => {
+      e.preventDefault();
 
-       const { noErrors, allFilled } = validateForm();
+      const { noErrors, allFilled } = validateForm();
+      if (!noErrors || !allFilled) return;
 
-       if (!noErrors || !allFilled) {
-         const allTouched = {};
-         Object.keys(form).forEach((key) => {
-           allTouched[key] = true;
-         });
-         setTouched(allTouched);
-         return;
-       }
+      const id = toast.loading("Submitting form...");
 
-     const existingUsers =
-       JSON.parse(localStorage.getItem("users")) || [];
+      try {
+        const existingUsers = await getUsers();
 
-     const emailAlreadyExists = existingUsers.some(
-       user => user.email.toLowerCase() === form.email.toLowerCase()
-     );
+        const emailAlreadyExists = existingUsers.some(
+          user => user.email.toLowerCase() === form.email.toLowerCase()
+        );
 
-     if (emailAlreadyExists) {
-       setErrors(prev => ({
-         ...prev,
-         email: "Email already exists"
-       }));
-       return;
-     }
+        if (emailAlreadyExists) {
+          toast.update(id, {
+            render: "Email already exists",
+            type: "error",
+            isLoading: false,
+            autoClose: 2000,
+          });
 
-     existingUsers.push(form);
-     localStorage.setItem("users", JSON.stringify(existingUsers));
+          setErrors(prev => ({
+            ...prev,
+            email: "Email already exists"
+          }));
 
-     const id = toast.loading("Submitting form...");
+          return;
+        }
 
-     setTimeout(() => {
-       toast.update(id, {
-         render: "Form successfully submitted!",
-         type: "success",
-         isLoading: false,
-         autoClose: 1500,
-         onClose: () => navigate("/"),
-       });
+        await createUser(form);
 
-       setForm(initialState);
-       setTouched({});
-       setErrors({});
-       setIsValid(false);
-     }, 300);
-   };
+        toast.update(id, {
+          render: "Form successfully submitted!",
+          type: "success",
+          isLoading: false,
+          autoClose: 1500,
+          onClose: () => navigate("/"),
+        });
+
+        setForm(initialState);
+        setTouched({});
+        setErrors({});
+        setIsValid(false);
+
+      } catch (error) {
+
+          if (error.response?.status === 400) {
+
+            const message = error.response.data?.message || "Email already exists";
+
+            toast.update(id, {
+              render: message,
+              type: "error",
+              isLoading: false,
+              autoClose: 2000,
+            });
+
+          }
+          else if (error.response?.status === 500) {
+
+            toast.update(id, {
+              render: "Server error. Please try again later.",
+              type: "error",
+              isLoading: false,
+              autoClose: 2000,
+            });
+
+          }
+          else {
+
+            toast.update(id, {
+              render: "Unexpected error occurred.",
+              type: "error",
+              isLoading: false,
+              autoClose: 2000,
+            });
+          }
+        }
+    };
 
     /**
      * Render the registration form component

@@ -4,7 +4,10 @@
  */
 
 import { useEffect, useState } from "react";
+import axios from "axios";
+
 import EnvelopeLogo from "../assets/EnvelopeLogo";
+import { getUsers } from "../services/userService";
 
 /**
  * @typedef {Object} User
@@ -59,8 +62,16 @@ function Home() {
    * @effect
    */
   useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
-    setUsers(storedUsers);
+    const fetchUsers = async () => {
+      try {
+        const users = await getUsers();
+        setUsers(users);
+      } catch (error) {
+        console.error("Error fetching users", error);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
   return (
@@ -95,7 +106,7 @@ function Home() {
                     key={index}
                     className="text-lg font-semibold text-gray-900"
                   >
-                    {user.firstname} {user.lastname}
+                    {user.name} {user.email}
                   </li>
                 ))}
               </ul>
