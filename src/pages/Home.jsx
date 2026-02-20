@@ -106,7 +106,7 @@ function Home() {
                     key={index}
                     className="text-lg font-semibold text-gray-900"
                   >
-                    {user.name} {user.email}
+                    {user.email}
                   </li>
                 ))}
               </ul>
