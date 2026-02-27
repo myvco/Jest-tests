@@ -1,6 +1,5 @@
 import { Routes, Route, Link, useLocation } from "react-router-dom"
 import Home from "./pages/Home"
-import FormPage from "./pages/FormPage"
 import Counter from "./component/Counter"
 
 function App() {
