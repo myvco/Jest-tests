@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 
 import { createUser, getUsers } from "../services/userService";
 import {
+    validateAge,
     validatePostCode,
     validateIdentity,
     validateEmail,
