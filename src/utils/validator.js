@@ -240,6 +240,10 @@ function validateTown(town) {
     }
 }
 
+function newFunction(town) {
+    console.log(town)
+};
+
 /**
  * Export all validation functions for use in other modules
  * @exports validator
