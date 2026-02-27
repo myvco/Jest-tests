@@ -11,7 +11,7 @@
  *
  * @throws {Object} Throws an error object with code and message properties if:
  *   - birth is not a valid Date instance or is NaN
- *     {code: "INVALID_DATE", message: "Birth date is invalid"}
+ *     {code: "INVALID_DATE", message: "Birth date is not valid"}
  *   - birthdate is in the future
  *     {code: "INVALID_DATE", message: "Birth date cannot be in the future"}
  *   - calculated age is less than 18
@@ -31,7 +31,7 @@
  */
 function validateAge(birth) {
   if (!(birth instanceof Date) || isNaN(birth.getTime())) {
-    throw { code: "INVALID_DATE", message: "Birth date is invalid" };
+    throw { code: "INVALID_DATE", message: "Birth date is not valid" };
   }
 
   const now = new Date();
