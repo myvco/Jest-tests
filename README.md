@@ -154,3 +154,5 @@ exclude: [
 'src/App.jsx'
 ]
 }
+
+🔗 Package NPM : https://www.npmjs.com/package/manon-ci-cd-ynov
