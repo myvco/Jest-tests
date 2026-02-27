@@ -1,8 +1,7 @@
 {
-  "name": "project-test",
+  "name": "manon-ci-cd-ynov",
   "homepage": "https://github.com/myvco/Jest-tests",
   "version": "0.1.6",
-  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest --coverage",
     "jsdoc": "jsdoc -r src -d docs",
-    "cypress": "cypress open"
+    "cypress": "cypress open",
+    "build-npm-ci": "NODE_ENV=production && rm -rf dist && mkdir dist && npx babel src --out-dir dist--copy-files"
   },
   "dependencies": {
     "axios": "^1.13.5",
