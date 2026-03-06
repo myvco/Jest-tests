@@ -122,6 +122,9 @@ jobs:
             -p 3306:3306 \
             mysql:8.0
 
+      - name: Wait for MySQL
+        run: sleep 25
+
       - name: Run API container
         run: |
           docker run -d \
@@ -140,12 +143,6 @@ jobs:
       - name: Test API endpoint
         run: |
           curl --fail http://localhost:8000/users
-
-      - name: Show containers
-        run: docker ps
-
-      - name: Show logs
-        run: docker logs api-test
 
   deploy:
     needs: publish-npm
