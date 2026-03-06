@@ -110,20 +110,17 @@ jobs:
     steps:
       -  uses: actions/checkout@v3
 
-      - name: Build MySQL image
-        run: docker build -t test-mysql -f Dockerfile.mysql .
-
       - name: Build FastApi image
         run: docker build -t test-api .
 
       - name: Run MySQL container
         run: |
           docker run -d \
-          --name mysql-test \
-          -e MYSQL_ROOT_PASSWORD=testpw \
-          -e MYSQL_DATABASE=ynov_ci \
-          -p 3306:3306 \
-          test-mysql
+            --name mysql-test \
+            -e MYSQL_ROOT_PASSWORD=testpw \
+            -e MYSQL_DATABASE=ynov_ci \
+            -p 3306:3306 \
+            mysql:8.0
 
       - name: Run API container
         run: |
@@ -142,7 +139,7 @@ jobs:
 
       - name: Test API endpoint
         run: |
-          curl --fail http://localhost:8080/users
+          curl --fail http://localhost:8000/users
 
   deploy:
     needs: publish-npm
