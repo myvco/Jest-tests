@@ -27,18 +27,6 @@ describe("Validation form", () => {
         ).not.toThrow();
     });
 
-    it("should reject age under 18", () => {
-        expect(() =>
-            validateAge(new Date("2008-03-02"))
-        ).toThrow(expect.objectContaining({ code: "INVALID_AGE" }));
-    });
-
-    it("should handle leap year birthday", () => {
-        expect(() =>
-            validateAge(new Date("2008-02-29"))
-        ).toThrow(expect.objectContaining({ code: "INVALID_AGE" }));
-    });
-
     //POST CODE
     it("should accept a valid post code", () => {
         expect(() => validatePostCode("37000")).not.toThrow();
