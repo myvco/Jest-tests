@@ -141,6 +141,12 @@ jobs:
         run: |
           curl --fail http://localhost:8000/users
 
+      - name: Show containers
+        run: docker ps
+
+      - name: Show logs
+        run: docker logs api-test
+
   deploy:
     needs: publish-npm
     permissions:
