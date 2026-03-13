@@ -145,7 +145,7 @@ jobs:
           curl --fail http://localhost:8000/users
 
   deploy:
-    needs: publish-npm
+    needs: docker
     permissions:
       pages: write
       id-token: write
