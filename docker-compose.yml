@@ -2,7 +2,6 @@ version: "3.8"
 services:
   db:
     image: migration_mysql
-    restart: always
     environment:
        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
        - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -10,19 +9,30 @@ services:
       - 3307:3306
     volumes:
       - ./sqlfiles/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
+      interval: 15s
+      timeout: 1m
+      retries: 2
 
   adminer:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     image: adminer
-    restart: always
     ports:
-      - 8080:8080
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 15s
+      timeout: 1m
+      retries: 2
+
 
   server:
     depends_on:
-      - db
-    restart: always
+       db:
+        condition: service_healthy
     build:
       context: ./server
       dockerfile: fastapi.Dockerfile
@@ -30,7 +40,12 @@ services:
      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
      - MYSQL_DATABASE=${MYSQL_DATABASE}
      - MYSQL_HOST=db
-     - MYSQL_USER
+     - MYSQL_USER=${MYSQL_USER}
     container_name: server-container
     ports:
      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 15s
+      timeout: 1m
+      retries: 2
