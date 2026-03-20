@@ -156,9 +156,11 @@ describe("Form validation", () => {
 
       const { getUsers } = await import("../services/userService");
 
-      getUsers.mockResolvedValue([
-        { email: existingEmail }
-      ]);
+      getUsers.mockResolvedValue({
+        utilisateurs: [
+            { email: existingEmail }
+          ]
+      });
 
       renderWithRouter(<Form />);
 
