@@ -4,7 +4,6 @@
  */
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 import EnvelopeLogo from "../assets/EnvelopeLogo";
 import { getUsers } from "../services/userService";
@@ -61,18 +60,18 @@ function Home() {
    *
    * @effect
    */
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const users = await getUsers();
-        setUsers(users);
-      } catch (error) {
-        console.error("Error fetching users", error);
-      }
-    };
+   useEffect(() => {
+      const fetchUsers = async () => {
+        try {
+          const data = await getUsers();
+          setUsers(data.utilisateurs);
+        } catch (error) {
+          console.error("Error fetching users", error);
+        }
+      };
 
-    fetchUsers();
-  }, []);
+      fetchUsers();
+    }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8 rounded-xl">

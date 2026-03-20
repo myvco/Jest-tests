@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   db:
-    image: migration_mysql
+    image: mysql:9.2
     environment:
        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
        - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -28,7 +28,6 @@ services:
       timeout: 1m
       retries: 2
 
-
   server:
     depends_on:
        db:
@@ -49,3 +48,19 @@ services:
       interval: 15s
       timeout: 1m
       retries: 2
+
+  react:
+    image: react
+    build:
+      context: .
+      dockerfile: ./react.Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - server
+    command: npm run dev -- --host 0.0.0.0
