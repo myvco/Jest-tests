@@ -1,7 +1,7 @@
 describe("Navigation pages and users list", () => {
   beforeEach(() => {
-    cy.intercept("GET", "http://localhost:8000/users").as("getUsers");
-    cy.intercept("POST", "http://localhost:8000/users").as("createUser");
+    cy.intercept("GET", "**/users").as("getUsers");
+    cy.intercept("POST", "**/users").as("createUser");
     cy.visit("http://localhost:5173/");
     cy.wait("@getUsers");
   });
