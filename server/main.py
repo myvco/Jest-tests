@@ -1,10 +1,24 @@
 import mysql.connector
 import os
-from fastapi import FastAPI
+import hashlib
+import jwt
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
+
+class User(BaseModel):
+    nom: str
+    prenom: str
+    email: str
+    date_naissance: str | None = None
+    pays: str | None = None
+    ville: str | None = None
+    code_postal: str | None = None
 
 app = FastAPI()
 origins = ["*"]
@@ -17,21 +31,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create a connection to the database
-conn = mysql.connector.connect(
-    database=os.getenv("MYSQL_DATABASE"),
-    user=os.getenv("MYSQL_USER"),
-    password=os.getenv("MYSQL_ROOT_PASSWORD"),
-    port=3306,
-    host=os.getenv("MYSQL_HOST"))
-
 @app.get("/users")
 async def get_users():
+    conn = mysql.connector.connect(
+        database=os.getenv("MYSQL_DATABASE"),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_ROOT_PASSWORD"),
+        port=3306,
+        host=os.getenv("MYSQL_HOST")
+    )
+
     cursor = conn.cursor(dictionary=True)
-    sql_select_Query = "select * from utilisateur"
-    cursor.execute(sql_select_Query)
-    # get all records
+    cursor.execute("SELECT * FROM utilisateur")
     records = cursor.fetchall()
-    print("Total number of rows in table: ", cursor.rowcount)
-    # renvoyer nos données et 200 code OK
-    return {'utilisateurs': records}
+
+    cursor.close()
+    conn.close()
+
+    return {"utilisateurs": records}
+
+@app.post("/users")
+async def create_user(user: User):
+    conn = mysql.connector.connect(
+        database=os.getenv("MYSQL_DATABASE"),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_ROOT_PASSWORD"),
+        port=3306,
+        host=os.getenv("MYSQL_HOST")
+    )
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM utilisateur WHERE email = %s", (user.email,))
+    if cursor.fetchone():
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    sql_query = """
+                INSERT INTO utilisateur (nom, prenom, email, date_naissance, pays, ville, code_postal)
+                VALUES (%s, %s, %s, %s, %s, %s, %s) \
+                """
+
+    values = (
+        user.nom,
+        user.prenom,
+        user.email,
+        user.date_naissance,
+        user.pays,
+        user.ville,
+        user.code_postal
+    )
+
+    cursor.execute(sql_query, values)
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return {"message": "User created successfully"}

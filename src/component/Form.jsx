@@ -221,8 +221,10 @@ function Form() {
       const id = toast.loading("Submitting form...");
 
       try {
-        const existingUsers = await getUsers();
-
+       const response = await getUsers();
+       const existingUsers = Array.isArray(response?.utilisateurs)
+         ? response.utilisateurs
+         : [];
         const emailAlreadyExists = existingUsers.some(
           user => user.email.toLowerCase() === form.email.toLowerCase()
         );
@@ -243,7 +245,17 @@ function Form() {
           return;
         }
 
-        await createUser(form);
+    const payload = {
+        nom: form.lastname,
+        prenom: form.firstname,
+        email: form.email,
+        date_naissance: form.birth || null,
+        ville: form.town || null,
+        code_postal: form.postCode || null,
+        pays: null,
+        };
+
+        await createUser(payload);
 
         toast.update(id, {
           render: "Form successfully submitted!",
@@ -259,10 +271,12 @@ function Form() {
         setIsValid(false);
 
       } catch (error) {
+          console.error("SUBMIT ERROR:", error);
+          console.error("response:", error.response);
+          console.error("message:", error.message);
 
           if (error.response?.status === 400) {
-
-            const message = error.response.data?.message || "Email already exists";
+            const message = error.response.data?.detail || "Email already exists";
 
             toast.update(id, {
               render: message,
@@ -270,22 +284,16 @@ function Form() {
               isLoading: false,
               autoClose: 2000,
             });
-
-          }
-          else if (error.response?.status === 500) {
-
+          } else if (error.response?.status === 500) {
             toast.update(id, {
               render: "Server error. Please try again later.",
               type: "error",
               isLoading: false,
               autoClose: 2000,
             });
-
-          }
-          else {
-
+          } else {
             toast.update(id, {
-              render: "Unexpected error occurred.",
+              render: `Unexpected error: ${error.message}`,
               type: "error",
               isLoading: false,
               autoClose: 2000,
