@@ -9,9 +9,11 @@ function Home() {
     const fetchUsers = async () => {
       try {
         const data = await getUsers();
-        setUsers(Array.isArray(data?.utilisateurs) ? data.utilisateurs : []);
+        const usersFromApi = Array.isArray(data?.utilisateurs)
+          ? data.utilisateurs
+          : [];
+        setUsers(usersFromApi);
       } catch (error) {
-        console.error("Error fetching users", error);
         setUsers([]);
       }
     };
@@ -40,7 +42,10 @@ function Home() {
             ) : (
               <ul data-testid="users-list" className="space-y-2">
                 {users.map((user, index) => (
-                  <li key={index} className="text-lg font-semibold text-gray-900">
+                  <li
+                    key={user.id || index}
+                    className="text-lg font-semibold text-gray-900"
+                  >
                     {user.prenom} {user.nom} - {user.email}
                   </li>
                 ))}
@@ -52,7 +57,11 @@ function Home() {
             <h3 className="font-semibold text-gray-700 mb-2">
               Subscribers count
             </h3>
-            <p data-testid="users-count" className="text-4xl font-bold text-indigo-600">
+
+            <p
+              data-testid="users-count"
+              className="text-4xl font-bold text-indigo-600"
+            >
               {users.length}
             </p>
           </div>

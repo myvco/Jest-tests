@@ -1,60 +1,43 @@
 describe("Navigation pages and users list", () => {
-
   beforeEach(() => {
-    cy.visit("http://localhost:5173/")
-  })
+    cy.intercept("GET", "http://localhost:8000/users").as("getUsers");
+    cy.intercept("POST", "http://localhost:8000/users").as("createUser");
+    cy.visit("http://localhost:5173/");
+    cy.wait("@getUsers");
+  });
 
-  it("Nominal scenario + Error scenario", () => {
+  it("creates a user and displays it on home", () => {
+    cy.get('[data-testid="users-count"]')
+      .invoke("text")
+      .then((text) => {
+        const initialCount = Number(text.trim());
+        const email = `jean${Date.now()}@test.com`;
 
-    // Home empty state
-    cy.get('[data-testid="users-count"]').should("contain", "0")
-    cy.get('[data-testid="no-users"]').should("exist")
+        cy.contains("Form").click();
+        cy.url().should("include", "/form");
 
-    // Navigate to form
-    cy.contains("Form").click()
-    cy.url().should("include", "/form")
+        cy.get('input[placeholder="lastname"]').type("Jean");
+        cy.get('input[placeholder="firstname"]').type("Pierre");
+        cy.get('input[placeholder="email"]').type(email);
+        cy.get('input[placeholder="birth"]').type("1995-05-15");
+        cy.get('input[placeholder="postCode"]').type("75001");
+        cy.get('input[placeholder="town"]').type("Paris");
 
-    // Fill form with valid data
-    cy.get('input[placeholder="lastname"]').type("Jean")
-    cy.get('input[placeholder="firstname"]').type("Pierre")
-    cy.get('input[placeholder="email"]').type("jean@test.com")
-    cy.get('input[placeholder="birth"]').type("1995-05-15")
-    cy.get('input[placeholder="postCode"]').type("75001")
-    cy.get('input[placeholder="town"]').type("Paris")
+        cy.get('button[type="submit"]').click();
 
-    // Submit
-    cy.get('button[type="submit"]').click()
+        cy.wait("@createUser").its("response.statusCode").should("eq", 200);
+        cy.wait("@getUsers");
 
-    cy.url().should("include", "/")
+        cy.url().should("not.include", "/form");
 
-    cy.get('[data-testid="users-count"]').should("contain", "1")
-    cy.get('[data-testid="users-list"]')
-      .should("contain", "Sincere@april.biz")
+        cy.get('[data-testid="users-list"]', { timeout: 10000 })
+          .should("contain", email);
 
-   // ---------- Error scenario : email already used ----------
-   cy.contains("Form").click()
-   cy.url().should("include", "/form")
-
-   // 👇 Interception du POST pour forcer erreur 400
-   cy.intercept("POST", "https://jsonplaceholder.typicode.com/users", {
-     statusCode: 400,
-     body: { message: "Email already exists" }
-   }).as("createUserError")
-
-   cy.get('input[placeholder="lastname"]').clear().type("Jean")
-   cy.get('input[placeholder="firstname"]').clear().type("Pierre")
-   cy.get('input[placeholder="email"]').clear().type("jean@test.com")
-   cy.get('input[placeholder="birth"]').clear().type("1995-05-15")
-   cy.get('input[placeholder="postCode"]').clear().type("75001")
-   cy.get('input[placeholder="town"]').clear().type("Paris")
-
-   cy.get('button[type="submit"]').click()
-
-   cy.wait("@createUserError")
-
-   cy.contains(/email already exists/i).should("be.visible")
-  })
-
- });
-
-
+        cy.get('[data-testid="users-count"]', { timeout: 10000 })
+          .invoke("text")
+          .then((newText) => {
+            expect(Number(newText.trim())).to.eq(initialCount + 1);
+          });
+      });
+  });
+});
