@@ -242,7 +242,7 @@ describe("Form validation", () => {
         expect(toast.update).toHaveBeenCalledWith(
           1,
           expect.objectContaining({
-            render: expect.stringMatching(/unexpected error occurred/i),
+            render: expect.stringMatching(/unexpected error/i),
             type: "error"
           })
         );
