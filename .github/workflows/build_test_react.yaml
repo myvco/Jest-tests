@@ -85,13 +85,16 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: Install Node.js 24.X
+
+      - name: Install Node.js
         uses: ./.github/actions/install-node
+
+      - name: Build app
+        run: npm run build
+
       - name: Start backend
         run: |
           npm run start:api &
-      - name: Build app
-        run: npm run build
 
       - name: Run e2e tests with Cypress
         id: e2e-test
@@ -100,6 +103,7 @@ jobs:
           install: false
           start: npx serve -s dist -l 5173
           wait-on: "http://localhost:5173, http://localhost:8000/users"
+
       - name: E2E Test report
         if: always()
         run: |
