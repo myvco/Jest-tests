@@ -103,6 +103,7 @@ jobs:
           install: false
           start: npx serve -s dist -l 5173
           wait-on: "http://localhost:5173, http://localhost:8000/users"
+          wait-on-timeout: 120
 
       - name: E2E Test report
         if: always()
