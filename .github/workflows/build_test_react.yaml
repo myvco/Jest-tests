@@ -40,13 +40,13 @@ jobs:
           else
           echo "❌ Build failed"
           fi
-          - name: Setup pages
-            id: pages
-            uses: actions/configure-pages@v3
-          - name: Upload artifact for deployment
-            uses: actions/upload-pages-artifact@v3
-            with:
-              path: dist
+      - name: Setup pages
+        id: pages
+        uses: actions/configure-pages@v3
+      - name: Upload artifact for deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
   test:
     name: Test on Node.js 24.x
