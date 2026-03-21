@@ -50,7 +50,10 @@ services:
       retries: 2
 
   react:
-    build: .
+    image: react
+    build:
+      context: .
+      dockerfile: ./react.Dockerfile
     ports:
       - "5173:5173"
     environment:
