@@ -90,8 +90,11 @@ jobs:
       - name: Start backend
         run: |
           npm run start:api &
+      - name: Build app
+        run: npm run build
 
       - name: Run e2e tests with Cypress
+        id: e2e-test
         uses: cypress-io/github-action@v6
         with:
           install: false
@@ -101,7 +104,8 @@ jobs:
         if: always()
         run: |
           echo "Node.js version: $(node -v)"
-          if [[ ${{ steps.e2e-test.outcome }} == "success" ]]; then
+          OUTCOME="${{ steps.e2e-test.outcome }}"
+          if [[ "$OUTCOME" == "success" ]]; then
             echo "✅ End-to-End Tests passed"
           else
             echo "❌ End-to-End Tests failed"
