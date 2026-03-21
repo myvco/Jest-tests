@@ -89,13 +89,9 @@ jobs:
         uses: ./.github/actions/install-node
       - name: Start backend
         run: |
-          uvicorn main:app --host 0.0.0.0 --port 8000 &
-      - name: Build for E2E
-        run: npm run build
-      - name: Install Cypress binary manually
-        run: npm exec cypress install
+          npm run start:api &
+
       - name: Run e2e tests with Cypress
-        id: e2e-test
         uses: cypress-io/github-action@v6
         with:
           install: false
