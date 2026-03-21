@@ -7,154 +7,223 @@ on:
     branches: [ main ]
 
 jobs:
-  build_test:
+  build:
+    name: Build on Node.js 24
     runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
     strategy:
       matrix:
-        node-version: [21.x]
+        node-version: [24.x]
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Install Node.js 24 ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-
       - name: Install dependencies
         run: npm ci
+      - name: Generate JSDoc
+        run: npm run jsdoc
+      - name: Build React App
+        id: build
+        run: npm run build
+      - name: Build report
+        if: always()
+        run: |
+          echo "Node.js version: $(node -v)"
+          if [[ ${{ steps.build.outcome }} == "success" ]]; then
+          echo "✅ Build succeeded"
+          else
+          echo "❌ Build failed"
+          fi
+          - name: Setup pages
+            id: pages
+            uses: actions/configure-pages@v3
+          - name: Upload artifact for deployment
+            uses: actions/upload-pages-artifact@v3
+            with:
+              path: dist
 
-      - name: Run tests with coverage
+  test:
+    name: Test on Node.js 24.x
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Install Node.js 24.x
+        uses: ./.github/actions/install-node
+      - name: Intégration tests
+        id: int-test
         run: npm test
-
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        with:
-          build: npm run build
-          start: npm run dev
-
-      - name: Upload coverage to Codecov
+      - name: Test report
+        if: always()
+        run: |
+          echo "Node.js version: $(node -v)"
+          if [[ ${{ steps.int-test.outcome }} == "success" ]]; then
+            echo "✅ Integration Tests passed"
+          else
+            echo "❌ Integration Tests failed"
+          fi
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           fail_ci_if_error: true
 
-      - name: Generate JSDoc
-        run: npm run jsdoc
-
-      - name: Build React app
-        run: npm run build
-
-      - name: Copy docs into dist
-        run: |
-          mkdir -p dist/docs
-          cp -r docs/* dist/docs/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  publish-npm:
-    needs: build_test
+  e2e:
+    name: End-to-End Tests
     runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Install Node.js 24.X
+        uses: ./.github/actions/install-node
+      - name: Build for E2E
+        run: PUBLIC_URL=/ npm run build
+      - name: Install Cypress binary manually
+        run: npm exec cypress install
+      - name: Run e2e tests with Cypress
+        id: e2e-test
+        uses: cypress-io/github-action@v6
         with:
-          node-version: 21.x
-          registry-url: https://registry.npmjs.org/
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check version difference
-        id: version_check
+          install: false
+          start: npx serve -s dist -l 5173
+          wait-on: "http://localhost:5173, http://localhost:8000/users"
+      - name: E2E Test report
+        if: always()
         run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          LOCAL_VERSION=$(node -p "require('./package.json').version")
-          PUBLISHED_VERSION=$(npm view $PACKAGE_NAME version || echo "0.0.0")
-          
-          echo "Local version: $LOCAL_VERSION"
-          echo "Published version: $PUBLISHED_VERSION"
-          
-          if [ "$LOCAL_VERSION" = "$PUBLISHED_VERSION" ]; then
-            echo "Version identical. Skipping publish."
-            echo "skip=true" >> $GITHUB_OUTPUT
+          echo "Node.js version: $(node -v)"
+          if [[ ${{ steps.e2e-test.outcome }} == "success" ]]; then
+            echo "✅ End-to-End Tests passed"
           else
-            echo "New version detected."
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "❌ End-to-End Tests failed"
           fi
 
-      - name: Build package
-        if: steps.version_check.output.skip == 'false'
-        run: npm run build
-
-      - name: Publish to NPM
-        if: steps.version_check.output.skip == 'false'
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN}}
-
-  docker:
-    needs: publish-npm
+  publish:
+    name: 📦 Publish to npm
     runs-on: ubuntu-latest
+    needs: [build, test, e2e]
+    permissions:
+      contents: write
+      id-token: write
     steps:
-      -  uses: actions/checkout@v3
-
-      - name: Build FastApi image
-        run: docker build -t test-api .
-
-      - name: Run MySQL container
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Authenticate with npm
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+      - name:  Version Check
+        id: version-check
         run: |
-          docker run -d \
-            --name mysql-test \
-            -e MYSQL_ROOT_PASSWORD=testpw \
-            -e MYSQL_DATABASE=ynov_ci \
-            -p 3306:3306 \
-            mysql:8.0
-
-      - name: Wait for MySQL
-        run: sleep 25
-
-      - name: Run API container
+          LOCAL_VERSION=$(cat package.json | jq -r '.version')
+          PUBLISHED_VERSION=$(npm view @myvco/projet-test version 2>/dev/null)
+          echo "Local version: $LOCAL_VERSION"
+          echo "Published version: $PUBLISHED_VERSION"
+          if [[ $(printf '%s\n' "$PUBLISHED_VERSION" "$LOCAL_VERSION" | sort -V | tail -n1) == "$LOCAL_VERSION" ]] && [[ "$LOCAL_VERSION" != "$PUBLISHED_VERSION" ]]; then
+            echo "✅ Version is ready to publish"
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Local version must be strictly greater than published version - skipping publish"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+      - name: 📦 Publish
+        if: steps.version-check.outputs.should_publish == 'true'
         run: |
-          docker run -d \
-           --name api-test \
-            --link mysql-test:mysql \
-            -e MYSQL_HOST=mysql \
-            -e MYSQL_USER=root \
-            -e MYSQL_PASSWORD=testpw \
-            -e MYSQL_DATABASE=ynov_ci \
-            -p 8000:8000 \
-            test-api
+          npm run build:npm
+          npm publish
 
-      - name: Wait API
-        run: sleep 10
-
-      - name: Test API endpoint
+  docker-build-and-run:
+    name: 🐳 Build and Run Docker Containers
+    runs-on: ubuntu-latest
+    needs: [publish]
+    env:
+      MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Get npm version
+        id: version-tag
         run: |
-          curl --fail http://localhost:8000/users
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      - name: Build and run Docker
+        run: |
+          docker compose up --build -d
+      - name: Wait 3 seconds for services to initialize
+        run: sleep 3
+      - name: Verify MySQL is running
+        run: |
+          if docker exec mysql-db mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent > /dev/null 2>&1; then
+            echo "✅ MySQL is running"
+          else
+            echo "❌ MySQL is not running"
+            docker logs mysql-db
+            exit 1
+          fi
+      - name: Verify API is running
+        run: |
+          RESPONSE=$(curl -sf http://localhost:8000/users)
+          echo "$RESPONSE"
+          USERS_COUNT=$(echo "$RESPONSE" | jq '.utilisateurs | length')
+          if [[ $USERS_COUNT -eq 0 ]]; then
+            echo "❌ Error: Users list is empty"
+            exit 1
+          fi
+          echo "✅ API is running with $USERS_COUNT user(s)"
+      - name: Verify Web is running
+        run: |
+          HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:5173)
+          if [[ "$HTTP_STATUS" -eq 200 ]]; then
+            echo "✅ Web application is running status code: $HTTP_STATUS"
+          else
+            echo "❌ Web application is not running status code: $HTTP_STATUS"
+            exit 1
+          fi
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Tag Docker images
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          IMAGE_TAG: ${{ steps.version-tag.outputs.VERSION }}
+        run: |
+          docker tag api_python $DOCKER_USERNAME/api_python:latest
+          docker tag api_python $DOCKER_USERNAME/api_python:$IMAGE_TAG
+      - name: Push images to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          IMAGE_TAG: ${{ steps.version-tag.outputs.VERSION }}
+        run: |
+          docker push $DOCKER_USERNAME/api_python:latest
+          docker push $DOCKER_USERNAME/api_python:$IMAGE_TAG
 
   deploy:
-    needs: docker
-    permissions:
-      pages: write
-      id-token: write
-    runs-on: ubuntu-latest
+    name: Deploy to GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    needs: publish
     steps:
-      - name: Deploy to Github Pages
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "serve": "serve -s dist -l 5173",
     "preview": "vite preview",
     "test": "vitest --coverage",
     "jsdoc": "jsdoc -r src -d docs",
@@ -17,7 +18,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.3",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "serve": "^14.2.6"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.17.0",
