@@ -80,7 +80,7 @@ jobs:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     env:
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      VITE_API_URL: http://localhost:8000
 
     steps:
       - name: Clone repository
@@ -89,13 +89,31 @@ jobs:
       - name: Install Node.js
         uses: ./.github/actions/install-node
 
+      # 🔥 Lancer toute la stack backend (API + DB)
+      - name: Start backend stack
+        run: |
+          docker compose up -d
+
+      # 🔎 Attendre que l'API soit prête
+      - name: Wait for backend
+        run: |
+          echo "Waiting for backend..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8000/users > /dev/null; then
+              echo "✅ Backend is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ Backend failed to start"
+          docker compose logs
+          exit 1
+
+      # 🔨 Build frontend
       - name: Build app
         run: npm run build
 
-      - name: Start backend
-        run: |
-          npm run start:api &
-
+      # 🧪 Cypress
       - name: Run e2e tests with Cypress
         id: e2e-test
         uses: cypress-io/github-action@v6
@@ -105,6 +123,7 @@ jobs:
           wait-on: "http://localhost:5173, http://localhost:8000/users"
           wait-on-timeout: 120
 
+      # 📊 Report
       - name: E2E Test report
         if: always()
         run: |
@@ -115,6 +134,10 @@ jobs:
           else
             echo "❌ End-to-End Tests failed"
           fi
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down
 
   publish:
     name: 📦 Publish to npm
