@@ -80,7 +80,11 @@ jobs:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     env:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
 
     steps:
       - name: Clone repository
