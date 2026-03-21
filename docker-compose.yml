@@ -1,45 +1,73 @@
+version: "3.8"
 services:
   db:
-    image: mysql:8.0
-    container_name: mysql-db
+    image: mysql:9.2
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+       - MYSQL_DATABASE=${MYSQL_DATABASE}
+    ports:
+      - 3307:3306
     volumes:
       - ./sqlfiles/:/docker-entrypoint-initdb.d/
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
+      interval: 15s
+      timeout: 1m
+      retries: 2
 
   adminer:
-    image: adminer
     depends_on:
       db:
         condition: service_healthy
+    image: adminer
     ports:
       - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 15s
+      timeout: 1m
+      retries: 2
 
-  api:
+  server:
+    depends_on:
+       db:
+        condition: service_healthy
     build:
       context: ./server
-      dockerfile: Dockerfile
-    container_name: api-container
-    depends_on:
-      db:
-        condition: service_healthy
+      dockerfile: fastapi.Dockerfile
     environment:
-      MYSQL_HOST: db
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+     - MYSQL_DATABASE=${MYSQL_DATABASE}
+     - MYSQL_HOST=db
+     - MYSQL_USER=${MYSQL_USER}
+    container_name: server-container
     ports:
-      - "8000:8000"
+     - "8000:8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/users"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 15s
+      timeout: 1m
+      retries: 2
+
+  react:
+    container_name: web_react
+    image: web_react
+    build:
+      context: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: on-failure:3
+    healthcheck:
+        test: "curl -f http://localhost:5173/projet-test/ || exit 1"
+        interval: 10s
+        timeout: 5s
+        retries: 5
+    ports:
+       - 5173:5173
+    environment:
+      - VITE_API_URL
+    command: npm run dev -- --host 0.0.0.0
