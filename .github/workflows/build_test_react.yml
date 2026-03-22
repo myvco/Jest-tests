@@ -208,11 +208,10 @@ jobs:
         run: sleep 3
       - name: Verify MySQL is running
         run: |
-          if docker exec mysql-db mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent > /dev/null 2>&1; then
-            echo "✅ MySQL is running"
+          if docker compose exec db mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent > /dev/null 2>&1; then            echo "✅ MySQL is running"
           else
             echo "❌ MySQL is not running"
-            docker logs mysql-db
+            docker logs db
             exit 1
           fi
       - name: Verify API is running
