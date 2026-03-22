@@ -37,6 +37,7 @@ services:
     build:
       context: ./server
       dockerfile: fastapi.Dockerfile
+    image: api_python
     environment:
      - MYSQL_DATABASE=${MYSQL_DATABASE}
      - MYSQL_HOST=db
