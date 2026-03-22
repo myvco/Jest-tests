@@ -120,6 +120,9 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Install Cypress binary
+        run: npx cypress install
+
       # 🧪 Cypress
       - name: Run e2e tests with Cypress
         id: e2e-test
