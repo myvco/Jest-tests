@@ -1,19 +1,19 @@
 version: "3.8"
 services:
   db:
-    image: mysql:9.2
+    image: mysql:8.0
     environment:
-       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-       - MYSQL_DATABASE=${MYSQL_DATABASE}
-    ports:
-      - 3307:3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - ./sqlfiles/:/docker-entrypoint-initdb.d/
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
-      interval: 15s
-      timeout: 1m
-      retries: 2
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   adminer:
     depends_on:
