@@ -101,7 +101,8 @@ jobs:
       # 🔥 Lancer toute la stack backend (API + DB)
       - name: Start backend stack
         run: |
-          docker compose up -d
+          docker compose down -v
+          docker compose up -d --build
 
       # 🔎 Attendre que l'API soit prête
       - name: Wait for backend
