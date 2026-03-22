@@ -125,7 +125,7 @@ jobs:
         id: e2e-test
         uses: cypress-io/github-action@v6
         with:
-          start: npx serve -s dist -l 5173
+          install: false
           wait-on: "http://localhost:5173, http://localhost:8000/users"
           wait-on-timeout: 120
 

@@ -2,6 +2,7 @@ describe("Navigation pages and users list", () => {
   beforeEach(() => {
     cy.intercept("GET", "**/users").as("getUsers");
     cy.intercept("POST", "**/users").as("createUser");
+
     cy.visit("http://localhost:5173/");
     cy.wait("@getUsers");
   });
@@ -13,9 +14,11 @@ describe("Navigation pages and users list", () => {
         const initialCount = Number(text.trim());
         const email = `jean${Date.now()}@test.com`;
 
+        // Aller sur le form
         cy.contains("Form").click();
-        cy.url().should("include", "/form");
+        cy.location("hash").should("include", "/form");
 
+        // Remplir le form
         cy.get('input[placeholder="lastname"]').type("Jean");
         cy.get('input[placeholder="firstname"]').type("Pierre");
         cy.get('input[placeholder="email"]').type(email);
@@ -23,17 +26,26 @@ describe("Navigation pages and users list", () => {
         cy.get('input[placeholder="postCode"]').type("75001");
         cy.get('input[placeholder="town"]').type("Paris");
 
+        // Submit
         cy.get('button[type="submit"]').click();
 
-        cy.wait("@createUser").its("response.statusCode").should("eq", 200);
+        // Vérifier POST OK
+        cy.wait("@createUser")
+          .its("response.statusCode")
+          .should("eq", 200);
+
+        // Attendre refresh liste
         cy.wait("@getUsers");
 
-        cy.url().should("not.include", "/form");
+        // Vérifier navigation (BON FIX)
+        cy.location("hash", { timeout: 10000 }).should("not.include", "/form");
 
+        // Attendre DOM (IMPORTANT)
         cy.get('[data-testid="users-list"]', { timeout: 10000 })
           .should("contain", email);
 
-        cy.get('[data-testid="users-count"]', { timeout: 10000 })
+        // Vérifier compteur
+        cy.get('[data-testid="users-count"]')
           .invoke("text")
           .then((newText) => {
             expect(Number(newText.trim())).to.eq(initialCount + 1);
