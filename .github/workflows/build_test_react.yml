@@ -158,18 +158,23 @@ jobs:
         run: npm ci
       - name: Authenticate with npm
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-      - name:  Version Check
+      - name: Version Check
         id: version-check
         run: |
-          LOCAL_VERSION=$(cat package.json | jq -r '.version')
-          PUBLISHED_VERSION=$(npm view @myvco/projet-test version 2>/dev/null)
+          LOCAL_VERSION=$(jq -r '.version' package.json)
           echo "Local version: $LOCAL_VERSION"
+
+          PUBLISHED_VERSION=$(npm view @myvco/projet-test version 2>/dev/null || echo "none")
           echo "Published version: $PUBLISHED_VERSION"
-          if [[ $(printf '%s\n' "$PUBLISHED_VERSION" "$LOCAL_VERSION" | sort -V | tail -n1) == "$LOCAL_VERSION" ]] && [[ "$LOCAL_VERSION" != "$PUBLISHED_VERSION" ]]; then
+
+          if [[ "$PUBLISHED_VERSION" == "none" ]]; then
+            echo "First publish detected"
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          elif [[ "$(printf '%s\n' "$PUBLISHED_VERSION" "$LOCAL_VERSION" | sort -V | tail -n1)" == "$LOCAL_VERSION" && "$LOCAL_VERSION" != "$PUBLISHED_VERSION" ]]; then
             echo "✅ Version is ready to publish"
             echo "should_publish=true" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ Local version must be strictly greater than published version - skipping publish"
+            echo "⚠️ Version must be greater than published version"
             echo "should_publish=false" >> $GITHUB_OUTPUT
           fi
       - name: 📦 Publish
