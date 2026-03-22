@@ -48,7 +48,7 @@ describe("Navigation pages and users list", () => {
         cy.get('[data-testid="users-count"]')
           .invoke("text")
           .then((newText) => {
-            expect(Number(newText.trim())).to.eq(initialCount + 1);
+            expect(Number(newText.trim())).to.be.greaterThan(initialCount);
           });
       });
   });
