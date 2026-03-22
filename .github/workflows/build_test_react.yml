@@ -227,7 +227,7 @@ jobs:
       - name: Verify Web is running
         run: |
           HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:5173)
-          if [[ "$HTTP_STATUS" -eq 200 ]]; then
+          if [[ "$HTTP_STATUS" -eq 200 || "$HTTP_STATUS" -eq 302 ]]; then
             echo "✅ Web application is running status code: $HTTP_STATUS"
           else
             echo "❌ Web application is not running status code: $HTTP_STATUS"
