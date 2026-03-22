@@ -112,12 +112,6 @@ jobs:
           echo "❌ Backend failed to start"
           docker compose logs
           exit 1
-      - name: Debug backend logs
-        run: docker compose logs api
-      - name: Test API manually
-        run: |
-          sleep 10
-          curl -v http://localhost:8000/users || true
 
       # 🔨 Build frontend
       - name: Build app
@@ -131,6 +125,8 @@ jobs:
           install: false
           start: npx serve -s dist -l 5173
           wait-on: "http://localhost:5173, http://localhost:8000/users"
+          wait-on-timeout: 120
+
       # 📊 Report
       - name: E2E Test report
         if: always()
