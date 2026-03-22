@@ -11,8 +11,9 @@
     "test": "vitest --coverage",
     "jsdoc": "jsdoc -r src -d docs",
     "cypress": "cypress open",
-    "build-npm-ci": "NODE_ENV=production && rm -rf dist && mkdir dist && npx babel src --out-dir dist--copy-files"
+    "build:npm": "npm run build"
   },
+  "files": ["dist"],
   "dependencies": {
     "axios": "^1.13.5",
     "react": "^18.2.0",
