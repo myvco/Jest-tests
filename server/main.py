@@ -36,7 +36,7 @@ async def get_users():
     conn = mysql.connector.connect(
         database=os.getenv("MYSQL_DATABASE"),
         user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_ROOT_PASSWORD"),
+        password=os.getenv("MYSQL_PASSWORD"),
         port=3306,
         host=os.getenv("MYSQL_HOST")
     )
@@ -55,7 +55,7 @@ async def create_user(user: User):
     conn = mysql.connector.connect(
         database=os.getenv("MYSQL_DATABASE"),
         user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_ROOT_PASSWORD"),
+        password=os.getenv("MYSQL_PASSWORD"),
         port=3306,
         host=os.getenv("MYSQL_HOST")
     )
