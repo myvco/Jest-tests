@@ -42,6 +42,7 @@ services:
      - MYSQL_DATABASE=${MYSQL_DATABASE}
      - MYSQL_HOST=db
      - MYSQL_USER=${MYSQL_USER}
+     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     container_name: server-container
     ports:
      - "8000:8000"

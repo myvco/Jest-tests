@@ -76,6 +76,7 @@ jobs:
           files: ./coverage/lcov.info
           fail_ci_if_error: true
 
+
   e2e:
     name: End-to-End Tests
     runs-on: ubuntu-latest
@@ -92,6 +93,10 @@ jobs:
 
       - name: Install Node.js
         uses: ./.github/actions/install-node
+      - name: Debug env
+        run: |
+          echo "MYSQL_USER=$MYSQL_USER"
+          echo "MYSQL_DATABASE=$MYSQL_DATABASE"
 
       # 🔥 Lancer toute la stack backend (API + DB)
       - name: Start backend stack
