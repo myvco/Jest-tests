@@ -1,16 +1,10 @@
-import { defineConfig } from "cypress";
-import { plugin as cypressGrepPlugin } from "@cypress/grep/plugin";
+const { defineConfig } = require("cypress");
+const grep = require("@cypress/grep/src/plugin");
 
 module.exports = defineConfig({
-  allowCypressEnv: false,
-  env: {
-    grepFilterSpecs: true,
-    grepOmitFiltered: true,
-  },
   e2e: {
-    baseUrl: "http://localhost:5173",
     setupNodeEvents(on, config) {
-      cypressGrepPlugin(config);
+      grep(config);
       return config;
     },
   },
