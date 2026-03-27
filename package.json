@@ -1,7 +1,7 @@
 {
   "name": "manon-ci-cd-ynov",
   "homepage": "https://github.com/myvco/Jest-tests",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
