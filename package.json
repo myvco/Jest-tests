@@ -11,7 +11,9 @@
     "test": "vitest --coverage",
     "jsdoc": "jsdoc -r src -d docs",
     "cypress": "cypress open",
-    "build:npm": "npm run build"
+    "build:npm": "npm run build",
+    "cypress:omit:critical": "cypress run --env grepTags=-@critical",
+    "cypress:run:critical": "cypress run --env grepTags=@critical"
   },
   "files": [
     "dist"
@@ -25,6 +27,7 @@
     "serve": "^14.2.6"
   },
   "devDependencies": {
+    "@cypress/grep": "^6.0.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.5.2",

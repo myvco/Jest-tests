@@ -8,41 +8,38 @@ on:
 
 jobs:
   build:
-    name: Build on Node.js 24
+    name: Build on Node.js 24.x
     runs-on: ubuntu-latest
     env:
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: Install Node.js 24 ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install dependencies
-        run: npm ci
+
+      - name: Install Node.js and dependencies
+        uses: ./.github/actions/install-node
+
       - name: Generate JSDoc
         run: npm run jsdoc
-      - name: Build React App
+
+      - name: Build app
         id: build
         run: npm run build
+
       - name: Build report
         if: always()
         run: |
           echo "Node.js version: $(node -v)"
-          if [[ ${{ steps.build.outcome }} == "success" ]]; then
-          echo "✅ Build succeeded"
+          if [[ "${{ steps.build.outcome }}" == "success" ]]; then
+            echo "✅ Build succeeded"
           else
-          echo "❌ Build failed"
+            echo "❌ Build failed"
           fi
-      - name: Setup pages
-        id: pages
+
+      - name: Setup Pages
         uses: actions/configure-pages@v3
+
       - name: Upload artifact for deployment
         uses: actions/upload-pages-artifact@v3
         with:
@@ -51,30 +48,34 @@ jobs:
   test:
     name: Test on Node.js 24.x
     runs-on: ubuntu-latest
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: Install Node.js 24.x
+
+      - name: Install Node.js and dependencies
         uses: ./.github/actions/install-node
-      - name: Intégration tests
+
+      - name:  Run tests
         id: int-test
         run: npm test
+
       - name: Test report
         if: always()
         run: |
           echo "Node.js version: $(node -v)"
-          if [[ ${{ steps.int-test.outcome }} == "success" ]]; then
-            echo "✅ Integration Tests passed"
+          if [[ "${{ steps.int-test.outcome }}" == "success" ]]; then
+            echo "✅ Integration tests passed"
           else
-            echo "❌ Integration Tests failed"
+            echo "❌ Integration tests failed"
           fi
-      - name: Upload coverage reports to Codecov
+
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           fail_ci_if_error: true
-
 
   e2e:
     name: End-to-End Tests
@@ -85,67 +86,85 @@ jobs:
       MYSQL_USER: ${{ secrets.MYSQL_USER }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+      MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: Install Node.js
+
+      - name: Install Node.js and dependencies
         uses: ./.github/actions/install-node
+
       - name: Debug env
         run: |
           echo "MYSQL_USER=$MYSQL_USER"
           echo "MYSQL_DATABASE=$MYSQL_DATABASE"
+          echo "MYSQL_HOST=$MYSQL_HOST"
 
-      # 🔥 Lancer toute la stack backend (API + DB)
-      - name: Start backend stack
+      - name: Start application stack
         run: |
-          docker compose down -v
+          docker compose down -v || true
           docker compose up -d --build
 
-      # 🔎 Attendre que l'API soit prête
-      - name: Wait for backend
+      - name: Wait for API to be healthy
         run: |
-          echo "Waiting for backend..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8000/users > /dev/null; then
-              echo "✅ Backend is ready"
+          echo "Waiting for API..."
+          for i in {1..40}; do
+            if curl -sf http://localhost:8000/users > /dev/null; then
+              echo "✅ API is ready"
               exit 0
             fi
-            sleep 2
+            sleep 3
           done
-          echo "❌ Backend failed to start"
+          echo "❌ API failed to start"
           docker compose logs
           exit 1
 
-      # 🔨 Build frontend
-      - name: Build app
-        run: npm run build
+      - name: Wait for frontend to be ready
+        run: |
+          echo "Waiting for frontend..."
+          for i in {1..40}; do
+            if curl -sf http://localhost:5173 > /dev/null; then
+              echo "✅ Frontend is ready"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "❌ Frontend failed to start"
+          docker compose logs
+          exit 1
 
       - name: Install Cypress binary
         run: npx cypress install
 
-      # 🧪 Cypress
-      - name: Run e2e tests with Cypress
+      - name: Run e2e happy-path tests
         id: e2e-test
-        uses: cypress-io/github-action@v6
-        with:
-          install: false
-          wait-on: "http://localhost:5173, http://localhost:8000/users"
-          wait-on-timeout: 120
+        run: npm run cypress:omit:critical
 
-      # 📊 Report
-      - name: E2E Test report
+      - name: Stop API for critical tests
+        run: docker compose stop server
+
+      - name: 🎭 Run critical e2e tests
+        id: e2e-critical-test
+        run: npm run cypress:run:critical
+
+      - name: E2E report
         if: always()
         run: |
           echo "Node.js version: $(node -v)"
-          OUTCOME="${{ steps.e2e-test.outcome }}"
-          if [[ "$OUTCOME" == "success" ]]; then
-            echo "✅ End-to-End Tests passed"
+          if [[ "${{ steps.e2e-test.outcome }}" == "success" && "${{ steps.e2e-critical-test.outcome }}" == "success" ]]; then
+            echo "✅ End-to-End tests passed"
           else
-            echo "❌ End-to-End Tests failed"
+            echo "❌ End-to-End tests failed"
           fi
+
+      - name: Show docker logs on failure
+        if: failure()
+        run: docker compose logs
+
       - name: Stop containers
         if: always()
-        run: docker compose down
+        run: docker compose down -v
 
   publish:
     name: 📦 Publish to npm
@@ -154,14 +173,18 @@ jobs:
     permissions:
       contents: write
       id-token: write
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
-      - name: Install dependencies
-        run: npm ci
+
+      - name: Install Node.js and dependencies
+        uses: ./.github/actions/install-node
+
       - name: Authenticate with npm
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-      - name: Version Check
+
+      - name: Version check
         id: version-check
         run: |
           LOCAL_VERSION=$(jq -r '.version' package.json)
@@ -180,7 +203,8 @@ jobs:
             echo "⚠️ Version must be greater than published version"
             echo "should_publish=false" >> $GITHUB_OUTPUT
           fi
-      - name: 📦 Publish
+
+      - name: 📦 Publish package
         if: steps.version-check.outputs.should_publish == 'true'
         run: |
           npm run build:npm
@@ -196,51 +220,60 @@ jobs:
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
       MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
+
       - name: Get npm version
         id: version-tag
         run: |
           VERSION=$(jq -r '.version' package.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-      - name: Build and run Docker
+
+      - name: 🐳 Build and run Docker
+        run: docker compose up --build -d
+
+      - name: ⏳ Wait for services
+        run: sleep 5
+
+      - name: ✅ Verify MySQL is running
         run: |
-          docker compose up --build -d
-      - name: Wait 3 seconds for services to initialize
-        run: sleep 3
-      - name: Verify MySQL is running
-        run: |
-          if docker compose exec db mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent > /dev/null 2>&1; then            echo "✅ MySQL is running"
+          if docker compose exec -T db mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent > /dev/null 2>&1; then
+            echo "✅ MySQL is running"
           else
             echo "❌ MySQL is not running"
-            docker logs db
+            docker compose logs db
             exit 1
           fi
-      - name: Verify API is running
+
+      - name: ✅ Verify API is running
         run: |
           RESPONSE=$(curl -sf http://localhost:8000/users)
           echo "$RESPONSE"
           USERS_COUNT=$(echo "$RESPONSE" | jq '.utilisateurs | length')
           if [[ $USERS_COUNT -eq 0 ]]; then
-            echo "❌ Error: Users list is empty"
+            echo "❌ Error: users list is empty"
             exit 1
           fi
           echo "✅ API is running with $USERS_COUNT user(s)"
-      - name: Verify Web is running
+
+      - name: ✅ Verify Web is running
         run: |
           HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:5173)
           if [[ "$HTTP_STATUS" -eq 200 || "$HTTP_STATUS" -eq 302 ]]; then
-            echo "✅ Web application is running status code: $HTTP_STATUS"
+            echo "✅ Web application is running, status: $HTTP_STATUS"
           else
-            echo "❌ Web application is not running status code: $HTTP_STATUS"
+            echo "❌ Web application is not running, status: $HTTP_STATUS"
             exit 1
           fi
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
+
       - name: Tag Docker images
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -248,13 +281,22 @@ jobs:
         run: |
           docker tag api_python $DOCKER_USERNAME/api_python:latest
           docker tag api_python $DOCKER_USERNAME/api_python:$IMAGE_TAG
-      - name: Push images to Docker Hub
+
+      - name: Push Docker images
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           IMAGE_TAG: ${{ steps.version-tag.outputs.VERSION }}
         run: |
           docker push $DOCKER_USERNAME/api_python:latest
           docker push $DOCKER_USERNAME/api_python:$IMAGE_TAG
+
+      - name: Show docker logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down -v
 
   deploy:
     name: Deploy to GitHub Pages
@@ -265,7 +307,8 @@ jobs:
     permissions:
       pages: write
       id-token: write
-    needs: publish
+    needs: [publish]
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
