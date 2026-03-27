@@ -139,14 +139,14 @@ jobs:
 
       - name: Run e2e happy-path tests
         id: e2e-test
-        run: npm run cypress:omit:critical
+        run: npm run cypress:happy
+
+      - name: Run critical e2e tests
+        id: e2e-critical-test
+        run: npm run cypress:critical
 
       - name: Stop API for critical tests
         run: docker compose stop server
-
-      - name: 🎭 Run critical e2e tests
-        id: e2e-critical-test
-        run: npm run cypress:run:critical
 
       - name: E2E report
         if: always()

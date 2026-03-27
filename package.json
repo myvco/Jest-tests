@@ -12,8 +12,8 @@
     "jsdoc": "jsdoc -r src -d docs",
     "cypress": "cypress open",
     "build:npm": "npm run build",
-    "cypress:omit:critical": "cypress run --env grepTags=-@critical",
-    "cypress:run:critical": "cypress run --env grepTags=@critical"
+    "cypress:happy": "cypress run --spec \"cypress/e2e/navigation.cy.js,cypress/e2e/spec.cy.js\"",
+    "cypress:critical": "cypress run --spec \"cypress/e2e/critical.cy.js\""
   },
   "files": [
     "dist"
